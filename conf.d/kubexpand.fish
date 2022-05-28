@@ -1,5 +1,9 @@
 function _kubexpand_update_abbreviations --on-event fish_prompt --description="Update dynamic kubectl aliases"
 
+    # Erase old abbreviations and in case Helm is gone for some reason
+    if not command --quiet helm
+        abbr --query helm; and abbr --erase helm
+    end
     # Erase old abbreviations and abort in case kubectl is gone for some reason
     if not command --quiet kubectl
         abbr --query k; and abbr --erase k
@@ -21,14 +25,19 @@ function _kubexpand_update_abbreviations --on-event fish_prompt --description="U
         return 0
     end
 
-    # Update kubectl abbreviations to contain current context
+    # Update kubectl and helm abbreviations to contain current context
     set kubectl_context (kubectl config current-context 2>/dev/null)
     if test -n "$kubectl_context"
         set kubectl_cmd "kubectl --context=$kubectl_context"
+        set helm_cmd "helm --kube-context=$kubectl_context"
     else
         set kubectl_cmd "kubectl"
+        set helm_cmd "helm"
     end
     abbr --global k $kubectl_cmd
     abbr --global kubectl $kubectl_cmd
+    if command --quiet helm
+        abbr --global helm $helm_cmd
+    end
 
 end
